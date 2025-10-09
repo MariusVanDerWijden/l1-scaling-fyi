@@ -188,6 +188,7 @@
                         pointBorderWidth: blobData.map(d => d.projected ? 3 : 2),
                         pointRadius: 5,
                         pointHoverRadius: 7,
+                        yAxisID: 'y',
                         segment: {
                             borderDash: ctx => {
                                 const idx = ctx.p1DataIndex;
@@ -208,6 +209,7 @@
                         pointBorderWidth: blobData.map(d => d.projected ? 3 : 2),
                         pointRadius: 5,
                         pointHoverRadius: 7,
+                        yAxisID: 'y',
                         segment: {
                             borderDash: ctx => {
                                 const idx = ctx.p1DataIndex;
@@ -254,21 +256,66 @@
                                     ];
                                 },
                                 label: function(context) {
-                                    return context.dataset.label + ': ' + context.parsed.y + ' blobs/block';
+                                    const blobs = context.parsed.y;
+                                    const kbps = (blobs * 128) / 12;
+                                    return context.dataset.label + ': ' + blobs + ' blobs/block (' + kbps.toFixed(1) + ' KB/s)';
                                 }
                             }
                         }
                     },
                     scales: {
                         y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
                             beginAtZero: false,
                             grid: {
                                 color: 'rgba(0, 0, 0, 0.05)'
                             },
                             ticks: {
                                 callback: function(value) {
-                                    return value.toLocaleString();
+                                    return value.toLocaleString() + ' blobs';
                                 }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Blobs per Block'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            beginAtZero: false,
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            min: function(context) {
+                                // Match the min of the left axis
+                                return context.chart.scales.y.min;
+                            },
+                            max: function(context) {
+                                // Match the max of the left axis
+                                return context.chart.scales.y.max;
+                            },
+                            afterBuildTicks: function(scale) {
+                                // Filter out ticks that would be below 20 KB/s
+                                scale.ticks = scale.ticks.filter(tick => {
+                                    const kbps = (tick.value * 128) / 12;
+                                    return kbps >= 20;
+                                });
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    // Convert blobs/block to KB/s
+                                    // Each blob is 128 KB, block time is 12 seconds
+                                    const kbps = (value * 128) / 12;
+                                    return kbps.toFixed(1) + ' KB/s';
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Throughput (KB/s)'
                             }
                         },
                         x: {
