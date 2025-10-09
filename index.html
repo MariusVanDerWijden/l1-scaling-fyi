@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blob Scaling Dashboard</title>
+    <title>Ethereum Blob Scaling</title>
     <style>
         * {
             margin: 0;
@@ -95,7 +95,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Blob Scaling Metrics</h1>
+        <h1>Ethereum Blob Scaling</h1>
 
         <div class="chart-card">
             <div class="chart-container">
@@ -105,15 +105,11 @@
             <div class="stats">
                 <div class="stat">
                     <div class="stat-value" id="currentCount">-</div>
-                    <div class="stat-label">Current Blob Count</div>
+                    <div class="stat-label">Current Target</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-value" id="growthRate">-</div>
-                    <div class="stat-label">Monthly Growth Rate</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value" id="totalGrowth">-</div>
-                    <div class="stat-label">Total Growth</div>
+                    <div class="stat-value" id="currentMax">-</div>
+                    <div class="stat-label">Current Max</div>
                 </div>
             </div>
         </div>
@@ -136,23 +132,29 @@
         }
 
         function calculateStats(data) {
-            if (data.length === 0) return { current: 0, growth: 0, total: 0 };
+            if (data.length === 0) return { current: 0, max: 0 };
 
-            const current = data[data.length - 1].count;
-            const first = data[0].count;
-            const totalGrowth = ((current - first) / first * 100).toFixed(1);
+            // Get today's date
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Reset time to start of day
 
-            let monthlyGrowth = 0;
-            if (data.length >= 2) {
-                const lastMonth = data[data.length - 1].count;
-                const prevMonth = data[data.length - 2].count;
-                monthlyGrowth = ((lastMonth - prevMonth) / prevMonth * 100).toFixed(1);
+            // Find the most recent upgrade that has already occurred
+            let currentTarget = 0;
+            let currentMax = 0;
+
+            for (const item of data) {
+                const [year, month, day] = item.date.split('-');
+                const upgradeDate = new Date(year, month - 1, day);
+
+                if (upgradeDate <= today && !item.projected) {
+                    currentTarget = item.target;
+                    currentMax = item.max;
+                }
             }
 
             return {
-                current: current.toLocaleString(),
-                growth: monthlyGrowth + '%',
-                total: totalGrowth + '%'
+                current: currentTarget.toLocaleString(),
+                max: currentMax.toLocaleString()
             };
         }
 
@@ -161,30 +163,58 @@
 
             const stats = calculateStats(blobData);
             document.getElementById('currentCount').textContent = stats.current;
-            document.getElementById('growthRate').textContent = stats.growth;
-            document.getElementById('totalGrowth').textContent = stats.total;
+            document.getElementById('currentMax').textContent = stats.max;
 
             const ctx = document.getElementById('blobChart').getContext('2d');
             chart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: blobData.map(d => {
-                        const date = new Date(d.date);
-                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        // Parse date as local time, not UTC
+                        const [year, month, day] = d.date.split('-');
+                        const date = new Date(year, month - 1, day);
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     }),
                     datasets: [{
-                        label: 'Blob Count',
-                        data: blobData.map(d => d.count),
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        label: 'Target',
+                        data: blobData.map(d => d.target),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
                         borderWidth: 3,
                         fill: true,
                         tension: 0.4,
-                        pointBackgroundColor: '#667eea',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
+                        pointBackgroundColor: blobData.map(d => d.projected ? '#fff' : '#10b981'),
+                        pointBorderColor: blobData.map(d => '#10b981'),
+                        pointBorderWidth: blobData.map(d => d.projected ? 3 : 2),
                         pointRadius: 5,
-                        pointHoverRadius: 7
+                        pointHoverRadius: 7,
+                        segment: {
+                            borderDash: ctx => {
+                                const idx = ctx.p1DataIndex;
+                                // If either point is projected, make the segment dashed
+                                return (idx > 0 && (blobData[idx].projected || blobData[idx - 1].projected)) ? [5, 5] : undefined;
+                            }
+                        }
+                    }, {
+                        label: 'Max',
+                        data: blobData.map(d => d.max),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: blobData.map(d => d.projected ? '#fff' : '#3b82f6'),
+                        pointBorderColor: blobData.map(d => '#3b82f6'),
+                        pointBorderWidth: blobData.map(d => d.projected ? 3 : 2),
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        segment: {
+                            borderDash: ctx => {
+                                const idx = ctx.p1DataIndex;
+                                // If either point is projected, make the segment dashed
+                                return (idx > 0 && (blobData[idx].projected || blobData[idx - 1].projected)) ? [5, 5] : undefined;
+                            }
+                        }
                     }]
                 },
                 options: {
@@ -192,7 +222,15 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            display: false
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                padding: 15,
+                                usePointStyle: true,
+                                font: {
+                                    size: 12
+                                }
+                            }
                         },
                         tooltip: {
                             backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -201,15 +239,22 @@
                             callbacks: {
                                 title: function(context) {
                                     const index = context[0].dataIndex;
-                                    const date = new Date(blobData[index].date);
-                                    return date.toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                    });
+                                    // Parse date as local time, not UTC
+                                    const [year, month, day] = blobData[index].date.split('-');
+                                    const date = new Date(year, month - 1, day);
+                                    const upgradeName = blobData[index]['upgrade-name'];
+                                    const isProjected = blobData[index].projected;
+                                    return [
+                                        upgradeName + ' Upgrade' + (isProjected ? ' (Projected)' : ''),
+                                        date.toLocaleDateString('en-US', {
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric'
+                                        })
+                                    ];
                                 },
                                 label: function(context) {
-                                    return 'Blob Count: ' + context.parsed.y.toLocaleString();
+                                    return context.dataset.label + ': ' + context.parsed.y + ' blobs/block';
                                 }
                             }
                         }
