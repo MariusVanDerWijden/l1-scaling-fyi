@@ -118,9 +118,6 @@
             </div>
         </div>
 
-        <div class="footer">
-            <p>Last updated: <span id="lastUpdate"></span></p>
-        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -239,14 +236,7 @@
             });
         }
 
-        function updateTime() {
-            const now = new Date();
-            document.getElementById('lastUpdate').textContent = now.toLocaleString();
-        }
-
         initChart();
-        updateTime();
-        setInterval(updateTime, 60000);
     </script>
 </body>
 </html>
