@@ -114,6 +114,7 @@
             </div>
         </div>
 
+        <div class="footer" id="lastUpdated"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -124,6 +125,19 @@
             try {
                 const response = await fetch('data.json');
                 const data = await response.json();
+
+                // Display last updated date
+                if (data.lastUpdated) {
+                    const [year, month, day] = data.lastUpdated.split('-');
+                    const date = new Date(year, month - 1, day);
+                    const formattedDate = date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    document.getElementById('lastUpdated').innerHTML = `Projected data (open points on chart) are subject to change<br>Last updated: ${formattedDate}`;
+                }
+
                 return data.blobData;
             } catch (error) {
                 console.error('Error loading data:', error);
