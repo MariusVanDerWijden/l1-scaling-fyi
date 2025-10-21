@@ -79,6 +79,134 @@
             font-size: 0.9rem;
         }
 
+        .calculator-card {
+            margin-top: 25px;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .calculator-header h2 {
+            font-size: 1.75rem;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .calculator-header p {
+            color: #6b7280;
+            font-size: 0.95rem;
+        }
+
+        .calculator-controls {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .control-group select,
+        .control-group input[type="number"] {
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background-color: #f9fafb;
+        }
+
+        .slider-row {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .slider-row input[type="range"] {
+            width: 100%;
+            accent-color: #667eea;
+        }
+
+        .slider-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .preset-button {
+            padding: 6px 12px;
+            border-radius: 9999px;
+            border: 1px solid #cbd5f5;
+            background: #eef2ff;
+            color: #4c51bf;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .preset-button:hover {
+            background: #e0e7ff;
+        }
+
+        .blob-stats {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            font-size: 0.9rem;
+            color: #4b5563;
+            flex-wrap: wrap;
+        }
+
+        .transfer-table {
+            width: 100%;
+            margin-top: 25px;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        .transfer-table thead {
+            background: #f3f4f6;
+        }
+
+        .transfer-table th,
+        .transfer-table td {
+            text-align: left;
+            padding: 12px 15px;
+        }
+
+        .transfer-table tbody tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .transfer-table tbody tr + tr {
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .transfer-table input[type="number"] {
+            width: 100%;
+        }
+
+        .scenario-notes {
+            color: #6b7280;
+            font-size: 0.85rem;
+        }
+
+        .calculator-footnote {
+            margin-top: 20px;
+            color: #6b7280;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
         @media (max-width: 768px) {
             h1 {
                 font-size: 1.8rem;
@@ -89,6 +217,13 @@
             .stats {
                 flex-direction: column;
                 gap: 15px;
+            }
+            .calculator-controls {
+                grid-template-columns: 1fr;
+            }
+            .blob-stats {
+                flex-direction: column;
+                align-items: flex-start;
             }
         }
     </style>
@@ -114,12 +249,82 @@
             </div>
         </div>
 
+        <div class="calculator-card">
+            <div class="calculator-header">
+                <h2>Rollup TPS Estimator</h2>
+                <p>Estimate how many rollup transactions per second fit in the available blob throughput for common transaction types.</p>
+            </div>
+
+            <div class="calculator-controls">
+                <div class="control-group">
+                    <label for="milestoneSelect">Blob scaling milestone</label>
+                    <select id="milestoneSelect" aria-label="Select blob scaling milestone">
+                        <option>Loading milestones…</option>
+                    </select>
+                    <span class="scenario-notes" id="milestoneContext"></span>
+                </div>
+                <div class="control-group">
+                    <label for="blobSlider">Blobs per block</label>
+                    <div class="slider-row">
+                        <input type="range" id="blobSlider" min="1" max="10" value="3" step="1">
+                        <div class="slider-buttons">
+                            <button type="button" class="preset-button" data-preset="target">Use target</button>
+                            <button type="button" class="preset-button" data-preset="max">Use max</button>
+                        </div>
+                    </div>
+                    <div class="blob-stats">
+                        <span id="blobCountDisplay">3 blobs/block</span>
+                        <span id="throughputDisplay">32.0 KB/s (0.03 MB/s)</span>
+                    </div>
+                </div>
+            </div>
+
+            <table class="transfer-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Scenario</th>
+                        <th scope="col">Data footprint (bytes)</th>
+                        <th scope="col">Estimated TPS</th>
+                    </tr>
+                </thead>
+                <tbody id="transferTableBody">
+                    <!-- Populated by script -->
+                </tbody>
+            </table>
+
+            <p class="calculator-footnote">
+                Assumes 12 second Ethereum block time and 128&nbsp;KB per blob. Adjust the data footprints to explore different compression or batching assumptions.
+            </p>
+        </div>
+
         <div class="footer" id="lastUpdated"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         let chart;
+        const BLOB_SIZE_BYTES = 128 * 1024;
+        const BLOCK_TIME_SECONDS = 12;
+        const transferProfiles = [
+            {
+                id: 'eth-transfer',
+                label: 'ETH transfer',
+                defaultSize: 120,
+                notes: 'Optimistic rollup payment with shared sender and recipient metadata'
+            },
+            {
+                id: 'erc20-transfer',
+                label: 'ERC-20 transfer',
+                defaultSize: 160,
+                notes: 'Token transfer including contract address and event data'
+            },
+            {
+                id: 'uniswap-trade',
+                label: 'Uniswap trade',
+                defaultSize: 360,
+                notes: 'Single hop swap with routing metadata'
+            }
+        ];
 
         async function loadData() {
             try {
@@ -172,8 +377,207 @@
             };
         }
 
+        function initCalculator(blobData) {
+            const milestoneSelect = document.getElementById('milestoneSelect');
+            const milestoneContext = document.getElementById('milestoneContext');
+            const blobSlider = document.getElementById('blobSlider');
+            const blobCountDisplay = document.getElementById('blobCountDisplay');
+            const throughputDisplay = document.getElementById('throughputDisplay');
+            const tableBody = document.getElementById('transferTableBody');
+
+            if (!milestoneSelect || !blobSlider || !tableBody || !blobCountDisplay || !throughputDisplay) return;
+
+            milestoneSelect.innerHTML = '';
+            blobData.forEach((milestone, index) => {
+                const option = document.createElement('option');
+                const dateLabel = formatUpgradeDate(milestone.date);
+                const projectedNotation = milestone.projected ? ' (projected)' : '';
+                option.value = String(index);
+                option.textContent = `${milestone['upgrade-name']} – ${dateLabel}${projectedNotation}`;
+                milestoneSelect.appendChild(option);
+            });
+
+            const confirmedIndex = blobData.findIndex(entry => !entry.projected);
+            const defaultIndex = confirmedIndex !== -1 ? confirmedIndex : 0;
+            milestoneSelect.value = String(defaultIndex);
+
+            tableBody.innerHTML = '';
+            transferProfiles.forEach(profile => {
+                const row = document.createElement('tr');
+                row.dataset.profileId = profile.id;
+
+                const scenarioCell = document.createElement('td');
+                scenarioCell.innerHTML = `<strong>${profile.label}</strong><div class="scenario-notes">${profile.notes}</div>`;
+
+                const inputCell = document.createElement('td');
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.min = '1';
+                input.value = profile.defaultSize;
+                input.dataset.profileId = profile.id;
+                input.setAttribute('aria-label', `${profile.label} data footprint in bytes`);
+                input.addEventListener('input', updateCalculations);
+                inputCell.appendChild(input);
+
+                const tpsCell = document.createElement('td');
+                tpsCell.className = 'tps-output';
+                tpsCell.textContent = '—';
+
+                row.appendChild(scenarioCell);
+                row.appendChild(inputCell);
+                row.appendChild(tpsCell);
+                tableBody.appendChild(row);
+            });
+
+            milestoneSelect.addEventListener('change', () => {
+                updateSliderFromMilestone();
+                applyMilestoneContext();
+                updateCalculations();
+            });
+
+            blobSlider.addEventListener('input', () => {
+                updateBlobStats();
+                updateCalculations();
+            });
+
+            document.querySelectorAll('.preset-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const selectedMilestone = getSelectedMilestone(blobData, milestoneSelect.value);
+                    if (!selectedMilestone) return;
+
+                    const preset = button.dataset.preset;
+                    const targetValue = preset === 'target' ? selectedMilestone.target : selectedMilestone.max;
+                    if (targetValue !== undefined && targetValue !== null && Number.isFinite(Number(targetValue))) {
+                        blobSlider.value = String(Number(targetValue));
+                        updateBlobStats();
+                        updateCalculations();
+                    }
+                });
+            });
+
+            function updateSliderFromMilestone() {
+                const selectedMilestone = getSelectedMilestone(blobData, milestoneSelect.value);
+                if (!selectedMilestone) return;
+
+                const upperBound = Math.max(
+                    Number(selectedMilestone.target) || 1,
+                    Number(selectedMilestone.max) || 0,
+                    1
+                );
+                blobSlider.min = '1';
+                const sliderMax = Math.max(upperBound, Number(blobSlider.value) || 1, Number(blobSlider.min) || 1);
+                blobSlider.max = String(sliderMax);
+                blobSlider.step = '1';
+                blobSlider.value = String(Number(selectedMilestone.target) || 1);
+                updateBlobStats();
+            }
+
+            function applyMilestoneContext() {
+                const selectedMilestone = getSelectedMilestone(blobData, milestoneSelect.value);
+                const targetButton = document.querySelector('.preset-button[data-preset="target"]');
+                const maxButton = document.querySelector('.preset-button[data-preset="max"]');
+
+                if (selectedMilestone) {
+                    if (milestoneContext) {
+                        milestoneContext.textContent = selectedMilestone.projected
+                            ? 'Projected milestone based on roadmap targets.'
+                            : 'Live network milestone.';
+                    }
+
+                    if (targetButton) {
+                        if (selectedMilestone.target) {
+                            targetButton.textContent = `Target (${selectedMilestone.target} blobs)`;
+                            targetButton.disabled = false;
+                        } else {
+                            targetButton.textContent = 'Target (n/a)';
+                            targetButton.disabled = true;
+                        }
+                    }
+
+                    if (maxButton) {
+                        if (selectedMilestone.max) {
+                            maxButton.textContent = `Max (${selectedMilestone.max} blobs)`;
+                            maxButton.disabled = false;
+                        } else {
+                            maxButton.textContent = 'Max (n/a)';
+                            maxButton.disabled = true;
+                        }
+                    }
+                } else {
+                    if (milestoneContext) {
+                        milestoneContext.textContent = 'Milestone data unavailable.';
+                    }
+                    if (targetButton) {
+                        targetButton.textContent = 'Target (n/a)';
+                        targetButton.disabled = true;
+                    }
+                    if (maxButton) {
+                        maxButton.textContent = 'Max (n/a)';
+                        maxButton.disabled = true;
+                    }
+                }
+            }
+
+            function updateBlobStats() {
+                const blobsPerBlock = Number(blobSlider.value) || 0;
+                const bytesPerSecond = (blobsPerBlock * BLOB_SIZE_BYTES) / BLOCK_TIME_SECONDS;
+                const kbPerSecond = bytesPerSecond / 1024;
+                const mbPerSecond = kbPerSecond / 1024;
+
+                blobCountDisplay.textContent = `${blobsPerBlock.toLocaleString()} blobs/block`;
+                throughputDisplay.textContent = `${kbPerSecond.toFixed(1)} KB/s (${mbPerSecond.toFixed(2)} MB/s)`;
+            }
+
+            function updateCalculations() {
+                const blobsPerBlock = Number(blobSlider.value) || 0;
+                const bytesPerSecond = (blobsPerBlock * BLOB_SIZE_BYTES) / BLOCK_TIME_SECONDS;
+
+                tableBody.querySelectorAll('tr').forEach(row => {
+                    const input = row.querySelector('input[type="number"]');
+                    const tpsCell = row.querySelector('.tps-output');
+                    if (!input || !tpsCell) return;
+
+                    const footprint = Number(input.value);
+                    if (!footprint || footprint <= 0) {
+                        tpsCell.textContent = '—';
+                        return;
+                    }
+
+                    const tps = bytesPerSecond / footprint;
+                    const fractionDigits = tps >= 100 ? 0 : 1;
+                    const formatted = tps.toLocaleString(undefined, {
+                        minimumFractionDigits: fractionDigits,
+                        maximumFractionDigits: fractionDigits
+                    });
+                    tpsCell.textContent = `${formatted} tx/s`;
+                });
+            }
+
+            updateSliderFromMilestone();
+            applyMilestoneContext();
+            updateCalculations();
+        }
+
+        function getSelectedMilestone(blobData, selectedIndex) {
+            const index = Number(selectedIndex);
+            if (!Array.isArray(blobData) || Number.isNaN(index) || index < 0 || index >= blobData.length) {
+                return null;
+            }
+            return blobData[index];
+        }
+
+        function formatUpgradeDate(dateString) {
+            if (!dateString) return 'TBD';
+            const [year, month, day] = dateString.split('-');
+            const parsedDate = new Date(year, month - 1, day);
+            if (Number.isNaN(parsedDate.getTime())) return 'TBD';
+            return parsedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
         async function initChart() {
             const blobData = await loadData();
+
+            initCalculator(blobData);
 
             const stats = calculateStats(blobData);
             document.getElementById('currentCount').textContent = stats.current;
@@ -271,8 +675,9 @@
                                 },
                                 label: function(context) {
                                     const blobs = context.parsed.y;
-                                    const kbps = (blobs * 128) / 12;
-                                    return context.dataset.label + ': ' + blobs + ' blobs/block (' + kbps.toFixed(1) + ' KB/s)';
+                                    const kbps = ((blobs * BLOB_SIZE_BYTES) / 1024) / BLOCK_TIME_SECONDS;
+                                    const mbps = kbps / 1024;
+                                    return context.dataset.label + ': ' + blobs + ' blobs/block (' + kbps.toFixed(1) + ' KB/s, ' + mbps.toFixed(2) + ' MB/s)';
                                 }
                             }
                         }
@@ -315,7 +720,7 @@
                             afterBuildTicks: function(scale) {
                                 // Filter out ticks that would be below 20 KB/s
                                 scale.ticks = scale.ticks.filter(tick => {
-                                    const kbps = (tick.value * 128) / 12;
+                                    const kbps = ((tick.value * BLOB_SIZE_BYTES) / 1024) / BLOCK_TIME_SECONDS;
                                     return kbps >= 20;
                                 });
                             },
@@ -323,7 +728,7 @@
                                 callback: function(value) {
                                     // Convert blobs/block to KB/s
                                     // Each blob is 128 KB, block time is 12 seconds
-                                    const kbps = (value * 128) / 12;
+                                    const kbps = ((value * BLOB_SIZE_BYTES) / 1024) / BLOCK_TIME_SECONDS;
                                     return kbps.toFixed(1) + ' KB/s';
                                 }
                             },
