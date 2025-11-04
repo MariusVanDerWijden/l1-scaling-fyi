@@ -397,8 +397,21 @@
                 milestoneSelect.appendChild(option);
             });
 
-            const confirmedIndex = blobData.findIndex(entry => !entry.projected);
-            const defaultIndex = confirmedIndex !== -1 ? confirmedIndex : 0;
+            // Find the most recent milestone relative to today's date
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            let defaultIndex = 0;
+            for (let i = blobData.length - 1; i >= 0; i--) {
+                const [year, month, day] = blobData[i].date.split('-');
+                const milestoneDate = new Date(year, month - 1, day);
+
+                if (milestoneDate <= today) {
+                    defaultIndex = i;
+                    break;
+                }
+            }
+
             milestoneSelect.value = String(defaultIndex);
 
             tableBody.innerHTML = '';
