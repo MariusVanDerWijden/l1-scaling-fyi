@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2025-10-23",
+  "lastUpdated": "2025-11-04",
   "blobData": [
     {
       "date": "2024-03-13",
@@ -17,47 +17,44 @@
       "date": "2025-12-03",
       "upgrade-name": "Fusaka",
       "target": 6,
-      "max": 9,
-      "projected": true
+      "max": 9
     },
     {
       "date": "2025-12-09",
-      "upgrade-name": "Fusaka BPO1",
+      "upgrade-name": "BPO1",
       "target": 10,
-      "max": 15,
-      "projected": true
+      "max": 15
     },
     {
       "date": "2026-01-07",
-      "upgrade-name": "Fusaka BPO2",
+      "upgrade-name": "BPO2",
       "target": 14,
-      "max": 21,
-      "projected": true
+      "max": 21
     },
     {
       "date": "2026-03-11",
-      "upgrade-name": "Fusaka BPO3",
+      "upgrade-name": "BPO3",
       "target": 20,
       "max": 30,
       "projected": true
     },
     {
       "date": "2026-04-08",
-      "upgrade-name": "Fusaka BPO4",
+      "upgrade-name": "BPO4",
       "target": 29,
       "max": 43,
       "projected": true
     },
     {
       "date": "2026-05-13",
-      "upgrade-name": "Fusaka BPO5",
+      "upgrade-name": "BPO5",
       "target": 42,
       "max": 63,
       "projected": true
     },
     {
       "date": "2026-06-10",
-      "upgrade-name": "Fusaka BPO6",
+      "upgrade-name": "BPO6",
       "target": 48,
       "max": 72,
       "projected": true
