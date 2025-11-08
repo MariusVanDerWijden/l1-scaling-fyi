@@ -207,6 +207,171 @@
             line-height: 1.4;
         }
 
+        .roadblocks-card {
+            margin-top: 25px;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .roadblocks-header h2 {
+            font-size: 1.75rem;
+            color: #1f2937;
+            margin-bottom: 30px;
+        }
+
+        .roadblocks-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 auto;
+            position: relative;
+            padding-left: 40px;
+            max-width: 800px;
+        }
+
+        .roadblocks-list::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        .roadblocks-list li {
+            padding: 25px 0;
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .roadblocks-list li::before {
+            content: '';
+            position: absolute;
+            left: -32px;
+            top: 28px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #667eea;
+            border: 4px solid white;
+            box-shadow: 0 0 0 3px #667eea;
+            z-index: 1;
+        }
+
+        .roadblocks-list li:first-child::before {
+            background: #10b981;
+            box-shadow: 0 0 0 3px #10b981;
+        }
+
+        .roadblocks-list li:last-child {
+            padding-bottom: 0;
+        }
+
+        .roadblock-gas {
+            font-weight: 700;
+            color: #667eea;
+            min-width: 100px;
+            flex-shrink: 0;
+            font-size: 1.1rem;
+        }
+
+        .roadblock-description {
+            color: #4b5563;
+            line-height: 1.6;
+            font-size: 1.05rem;
+        }
+
+        .roadblock-status {
+            font-size: 0.95rem;
+            color: #10b981;
+            font-style: italic;
+            font-weight: 500;
+        }
+
+        .faq-card {
+            margin-top: 25px;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .faq-header h2 {
+            font-size: 1.75rem;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .faq-subtitle {
+            color: #6b7280;
+            font-size: 1rem;
+            margin-bottom: 30px;
+        }
+
+        .faq-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .faq-item {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .faq-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .faq-question {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .faq-answer {
+            color: #4b5563;
+            line-height: 1.7;
+            font-size: 1.05rem;
+        }
+
+        .faq-answer ul {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+
+        .faq-answer li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .faq-answer strong {
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        .faq-answer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .faq-answer a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
         @media (max-width: 768px) {
             h1 {
                 font-size: 1.8rem;
@@ -224,6 +389,22 @@
             .blob-stats {
                 flex-direction: column;
                 align-items: flex-start;
+            }
+            .roadblocks-list {
+                padding-left: 35px;
+            }
+            .roadblocks-list::before {
+                left: 12px;
+            }
+            .roadblocks-list li::before {
+                left: -27px;
+            }
+            .roadblocks-list li {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .roadblock-gas {
+                min-width: auto;
             }
         }
     </style>
@@ -273,7 +454,7 @@
                         </div>
                     </div>
                     <div class="blob-stats">
-                        <span id="blobCountDisplay">30,000,000 gas/block</span>
+                        <span id="blobCountDisplay">30M gas/block</span>
                         <span id="throughputDisplay">2.5 M gas/s</span>
                     </div>
                 </div>
@@ -298,6 +479,93 @@
             </p>
         </div>
 
+        <div class="roadblocks-card">
+            <div class="roadblocks-header">
+                <h2>Roadblocks</h2>
+            </div>
+            <ul class="roadblocks-list">
+                <li>
+                    <span class="roadblock-gas">60M gas:</span>
+                    <span class="roadblock-description">
+                        Fusaka repricing of Modexp <span class="roadblock-status">(already accomplished)</span>
+                    </span>
+                </li>
+                <li>
+                    <span class="roadblock-gas">80M gas:</span>
+                    <span class="roadblock-description">
+                        Glamsterdam repricing of worst cases, eth/70
+                    </span>
+                </li>
+                <li>
+                    <span class="roadblock-gas">100M gas:</span>
+                    <span class="roadblock-description">
+                        eth/71 or significant calldata repricing
+                    </span>
+                </li>
+                <li>
+                    <span class="roadblock-gas">120M gas+:</span>
+                    <span class="roadblock-description">
+                        Resource harmonizations and re-anchoring
+                    </span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="faq-card">
+            <div class="faq-header">
+                <h2>FAQ</h2>
+            </div>
+            <ul class="faq-list">
+                <li class="faq-item">
+                    <div class="faq-question">Why not just speed up the roadmap?</div>
+                    <div class="faq-answer">
+                        Security, stability, and consensus are our top priorities. Rushing upgrades on a network securing hundreds of billions of dollars is extremely risky. Every change requires extensive research, parallel implementation by multiple independent client teams, and rigorous testing. A rushed roadmap would inevitably lead to critical bugs and network instability.
+                    </div>
+                </li>
+                <li class="faq-item">
+                    <div class="faq-question">What hardware are you targeting?</div>
+                    <div class="faq-answer">
+                        We are committed to keeping Ethereum accessible. Our goal is to ensure the L1 can be reliably run on consumer-grade hardware. The specific hardware specifications we are using as a benchmark for development are outlined in <strong><a href="https://eips.ethereum.org/EIPS/eip-7870" target="_blank" rel="noopener noreferrer">EIP-7870</a></strong>.
+                    </div>
+                </li>
+                <li class="faq-item">
+                    <div class="faq-question">Will these changes hurt decentralization?</div>
+                    <div class="faq-answer">
+                        No. Protecting decentralization is a core goal of this roadmap. The hardware targets in <a href="https://eips.ethereum.org/EIPS/eip-7870" target="_blank" rel="noopener noreferrer">EIP-7870</a> are specifically chosen to ensure that running a full node remains feasible for individuals, not just large-scale data centers. This is critical to preventing the centralization of node operators.
+                    </div>
+                </li>
+                <li class="faq-item">
+                    <div class="faq-question">How can I contribute?</div>
+                    <div class="faq-answer">
+                        Community contributions are vital! You can help in several key ways:
+                        <ul>
+                            <li><strong>Write benchmarks:</strong> We always need more data. Write and run benchmarks for the proposed changes to help us understand their real-world impact on different hardware.</li>
+                            <li><strong>Contribute to clients:</strong> All client teams (Geth, Nethermind, Besu, Erigon, etc.) need developers to help implement, test, and optimize the new EIPs.</li>
+                            <li><strong>Spread the message:</strong> Help educate the community! Share high-quality information, participate in discussions, and help combat misinformation.</li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="faq-item">
+                    <div class="faq-question">Are any of these numbers (gas costs, block limits) final?</div>
+                    <div class="faq-answer">
+                        No. All numbers discussed in proposals, EIPs, and presentations are estimates and are subject to change. They are used for research and modeling. Final parameters will only be set after extensive testing, benchmarking, and community consensus.
+                    </div>
+                </li>
+                <li class="faq-item">
+                    <div class="faq-question">How will gas repricings impact this?</div>
+                    <div class="faq-answer">
+                        The concept of "gas" will likely evolve. Gas will not mean the same anymore after the significant reprcings we are proposing. All numbers we are proposing here are subject to significant change and should illustrate how we are planning to scale compared to todays gas schedule.
+                    </div>
+                </li>
+                <li class="faq-item">
+                    <div class="faq-question">How will existing smart contracts be impacted by repricings?</div>
+                    <div class="faq-answer">
+                        When gas costs change, some operations will inevitably become more expensive (e.g., storage access), while most others (e.g., computation) will become significantly cheaper. We are analyzing existing on-chain data to understand this impact. The core goal is to break as few existing applications as possible while unlocking new, cheaper use cases.
+                    </div>
+                </li>
+            </ul>
+        </div>
+
         <div class="footer" id="lastUpdated"></div>
     </div>
 
@@ -305,6 +573,16 @@
     <script>
         let chart;
         const BLOCK_TIME_SECONDS = 12;
+
+        function formatGasNumber(value) {
+            if (value >= 1000000) {
+                return (value / 1000000).toFixed(0) + 'M';
+            } else if (value >= 1000) {
+                return (value / 1000).toFixed(0) + 'K';
+            }
+            return value.toString();
+        }
+
         const transferProfiles = [
             {
                 id: 'eth-transfer',
@@ -372,8 +650,8 @@
             }
 
             return {
-                current: currentTarget.toLocaleString(),
-                max: currentMax.toLocaleString()
+                current: formatGasNumber(currentTarget),
+                max: formatGasNumber(currentMax)
             };
         }
 
@@ -504,8 +782,8 @@
 
                     if (targetButton) {
                         if (selectedMilestone.target) {
-                            const targetFormatted = Number(selectedMilestone.target).toLocaleString();
-                            targetButton.textContent = `Target (${targetFormatted} gas)`;
+                            const targetFormatted = formatGasNumber(Number(selectedMilestone.target));
+                            targetButton.textContent = `Target (${targetFormatted})`;
                             targetButton.disabled = false;
                         } else {
                             targetButton.textContent = 'Target (n/a)';
@@ -515,8 +793,8 @@
 
                     if (maxButton) {
                         if (selectedMilestone.max) {
-                            const maxFormatted = Number(selectedMilestone.max).toLocaleString();
-                            maxButton.textContent = `Max (${maxFormatted} gas)`;
+                            const maxFormatted = formatGasNumber(Number(selectedMilestone.max));
+                            maxButton.textContent = `Max (${maxFormatted})`;
                             maxButton.disabled = false;
                         } else {
                             maxButton.textContent = 'Max (n/a)';
@@ -543,7 +821,7 @@
                 const gasPerSecond = gasLimit / BLOCK_TIME_SECONDS;
                 const gasPerSecondM = gasPerSecond / 1000000;
 
-                blobCountDisplay.textContent = `${gasLimit.toLocaleString()} gas/block`;
+                blobCountDisplay.textContent = `${formatGasNumber(gasLimit)} gas/block`;
                 throughputDisplay.textContent = `${gasPerSecondM.toFixed(2)} M gas/s`;
             }
 
@@ -705,7 +983,7 @@
                                     const gasLimit = context.parsed.y;
                                     const gasPerSecond = gasLimit / BLOCK_TIME_SECONDS;
                                     const gasPerSecondM = gasPerSecond / 1000000;
-                                    return context.dataset.label + ': ' + gasLimit.toLocaleString() + ' gas/block (' + gasPerSecondM.toFixed(2) + ' M gas/s)';
+                                    return context.dataset.label + ': ' + formatGasNumber(gasLimit) + ' gas/block (' + gasPerSecondM.toFixed(2) + ' M gas/s)';
                                 }
                             }
                         }
@@ -721,7 +999,7 @@
                             },
                             ticks: {
                                 callback: function(value) {
-                                    return value.toLocaleString() + ' gas';
+                                    return formatGasNumber(value);
                                 }
                             },
                             title: {
