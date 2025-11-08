@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ethereum Blob Scaling</title>
+    <title>Ethereum L1 Gas Limit Scaling</title>
     <style>
         * {
             margin: 0;
@@ -230,7 +230,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Ethereum Blob Scaling</h1>
+        <h1>Ethereum L1 Gas Limit Scaling</h1>
 
         <div class="chart-card">
             <div class="chart-container">
@@ -240,7 +240,7 @@
             <div class="stats">
                 <div class="stat">
                     <div class="stat-value" id="currentCount">-</div>
-                    <div class="stat-label">Current Target</div>
+                    <div class="stat-label">Current Gas Limit</div>
                 </div>
                 <div class="stat">
                     <div class="stat-value" id="currentMax">-</div>
@@ -251,30 +251,30 @@
 
         <div class="calculator-card">
             <div class="calculator-header">
-                <h2>Rollup TPS Estimator</h2>
-                <p>Estimate how many rollup transactions per second fit in the available blob throughput for common transaction types.</p>
+                <h2>Transaction Throughput Estimator</h2>
+                <p>Estimate transaction throughput based on gas limit and common transaction gas costs.</p>
             </div>
 
             <div class="calculator-controls">
                 <div class="control-group">
-                    <label for="milestoneSelect">Blob scaling milestone</label>
-                    <select id="milestoneSelect" aria-label="Select blob scaling milestone">
+                    <label for="milestoneSelect">Gas limit milestone</label>
+                    <select id="milestoneSelect" aria-label="Select gas limit milestone">
                         <option>Loading milestones…</option>
                     </select>
                     <span class="scenario-notes" id="milestoneContext"></span>
                 </div>
                 <div class="control-group">
-                    <label for="blobSlider">Blobs per block</label>
+                    <label for="blobSlider">Gas limit per block</label>
                     <div class="slider-row">
-                        <input type="range" id="blobSlider" min="1" max="10" value="3" step="1">
+                        <input type="range" id="blobSlider" min="10000000" max="200000000" value="30000000" step="1000000">
                         <div class="slider-buttons">
                             <button type="button" class="preset-button" data-preset="target">Use target</button>
                             <button type="button" class="preset-button" data-preset="max">Use max</button>
                         </div>
                     </div>
                     <div class="blob-stats">
-                        <span id="blobCountDisplay">3 blobs/block</span>
-                        <span id="throughputDisplay">32.0 KB/s (0.03 MB/s)</span>
+                        <span id="blobCountDisplay">30,000,000 gas/block</span>
+                        <span id="throughputDisplay">2.5 M gas/s</span>
                     </div>
                 </div>
             </div>
@@ -283,8 +283,9 @@
                 <thead>
                     <tr>
                         <th scope="col">Scenario</th>
-                        <th scope="col">Data footprint (bytes)</th>
-                        <th scope="col">Estimated TPS</th>
+                        <th scope="col">Gas cost per transaction</th>
+                        <th scope="col">Est. TPS</th>
+                        <th scope="col">Est. tx/block</th>
                     </tr>
                 </thead>
                 <tbody id="transferTableBody">
@@ -293,7 +294,7 @@
             </table>
 
             <p class="calculator-footnote">
-                Assumes 12 second Ethereum block time and 128&nbsp;KB per blob. Adjust the data footprints to explore different compression or batching assumptions.
+                Assumes 12 second Ethereum block time. Adjust the gas costs to explore different transaction types and complexity.
             </p>
         </div>
 
@@ -303,26 +304,25 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         let chart;
-        const BLOB_SIZE_BYTES = 128 * 1024;
         const BLOCK_TIME_SECONDS = 12;
         const transferProfiles = [
             {
                 id: 'eth-transfer',
                 label: 'ETH transfer',
-                defaultSize: 120,
-                notes: 'Optimistic rollup payment with shared sender and recipient metadata'
+                defaultSize: 21000,
+                notes: 'Simple ETH transfer (21,000 gas)'
             },
             {
                 id: 'erc20-transfer',
                 label: 'ERC-20 transfer',
-                defaultSize: 160,
-                notes: 'Token transfer including contract address and event data'
+                defaultSize: 65000,
+                notes: 'Token transfer with contract interaction (~65,000 gas)'
             },
             {
                 id: 'uniswap-trade',
-                label: 'Uniswap trade',
-                defaultSize: 360,
-                notes: 'Single hop swap with routing metadata'
+                label: 'Uniswap swap',
+                defaultSize: 150000,
+                notes: 'DEX swap transaction (~150,000 gas)'
             }
         ];
 
@@ -428,7 +428,7 @@
                 input.min = '1';
                 input.value = profile.defaultSize;
                 input.dataset.profileId = profile.id;
-                input.setAttribute('aria-label', `${profile.label} data footprint in bytes`);
+                input.setAttribute('aria-label', `${profile.label} gas cost per transaction`);
                 input.addEventListener('input', updateCalculations);
                 inputCell.appendChild(input);
 
@@ -436,9 +436,14 @@
                 tpsCell.className = 'tps-output';
                 tpsCell.textContent = '—';
 
+                const txPerBlockCell = document.createElement('td');
+                txPerBlockCell.className = 'tx-per-block-output';
+                txPerBlockCell.textContent = '—';
+
                 row.appendChild(scenarioCell);
                 row.appendChild(inputCell);
                 row.appendChild(tpsCell);
+                row.appendChild(txPerBlockCell);
                 tableBody.appendChild(row);
             });
 
@@ -473,15 +478,15 @@
                 if (!selectedMilestone) return;
 
                 const upperBound = Math.max(
-                    Number(selectedMilestone.target) || 1,
+                    Number(selectedMilestone.target) || 10000000,
                     Number(selectedMilestone.max) || 0,
-                    1
+                    10000000
                 );
-                blobSlider.min = '1';
-                const sliderMax = Math.max(upperBound, Number(blobSlider.value) || 1, Number(blobSlider.min) || 1);
-                blobSlider.max = String(sliderMax);
-                blobSlider.step = '1';
-                blobSlider.value = String(Number(selectedMilestone.target) || 1);
+                blobSlider.min = '10000000';
+                const sliderMax = Math.max(upperBound, Number(blobSlider.value) || 30000000, Number(blobSlider.min) || 10000000);
+                blobSlider.max = String(Math.max(sliderMax, 200000000));
+                blobSlider.step = '1000000';
+                blobSlider.value = String(Number(selectedMilestone.target) || 30000000);
                 updateBlobStats();
             }
 
@@ -499,7 +504,8 @@
 
                     if (targetButton) {
                         if (selectedMilestone.target) {
-                            targetButton.textContent = `Target (${selectedMilestone.target} blobs)`;
+                            const targetFormatted = Number(selectedMilestone.target).toLocaleString();
+                            targetButton.textContent = `Target (${targetFormatted} gas)`;
                             targetButton.disabled = false;
                         } else {
                             targetButton.textContent = 'Target (n/a)';
@@ -509,7 +515,8 @@
 
                     if (maxButton) {
                         if (selectedMilestone.max) {
-                            maxButton.textContent = `Max (${selectedMilestone.max} blobs)`;
+                            const maxFormatted = Number(selectedMilestone.max).toLocaleString();
+                            maxButton.textContent = `Max (${maxFormatted} gas)`;
                             maxButton.disabled = false;
                         } else {
                             maxButton.textContent = 'Max (n/a)';
@@ -532,37 +539,45 @@
             }
 
             function updateBlobStats() {
-                const blobsPerBlock = Number(blobSlider.value) || 0;
-                const bytesPerSecond = (blobsPerBlock * BLOB_SIZE_BYTES) / BLOCK_TIME_SECONDS;
-                const kbPerSecond = bytesPerSecond / 1024;
-                const mbPerSecond = kbPerSecond / 1024;
+                const gasLimit = Number(blobSlider.value) || 0;
+                const gasPerSecond = gasLimit / BLOCK_TIME_SECONDS;
+                const gasPerSecondM = gasPerSecond / 1000000;
 
-                blobCountDisplay.textContent = `${blobsPerBlock.toLocaleString()} blobs/block`;
-                throughputDisplay.textContent = `${kbPerSecond.toFixed(1)} KB/s (${mbPerSecond.toFixed(2)} MB/s)`;
+                blobCountDisplay.textContent = `${gasLimit.toLocaleString()} gas/block`;
+                throughputDisplay.textContent = `${gasPerSecondM.toFixed(2)} M gas/s`;
             }
 
             function updateCalculations() {
-                const blobsPerBlock = Number(blobSlider.value) || 0;
-                const bytesPerSecond = (blobsPerBlock * BLOB_SIZE_BYTES) / BLOCK_TIME_SECONDS;
+                const gasLimit = Number(blobSlider.value) || 0;
+                const gasPerSecond = gasLimit / BLOCK_TIME_SECONDS;
 
                 tableBody.querySelectorAll('tr').forEach(row => {
                     const input = row.querySelector('input[type="number"]');
                     const tpsCell = row.querySelector('.tps-output');
-                    if (!input || !tpsCell) return;
+                    const txPerBlockCell = row.querySelector('.tx-per-block-output');
+                    if (!input || !tpsCell || !txPerBlockCell) return;
 
-                    const footprint = Number(input.value);
-                    if (!footprint || footprint <= 0) {
+                    const gasCost = Number(input.value);
+                    if (!gasCost || gasCost <= 0) {
                         tpsCell.textContent = '—';
+                        txPerBlockCell.textContent = '—';
                         return;
                     }
 
-                    const tps = bytesPerSecond / footprint;
+                    const tps = gasPerSecond / gasCost;
                     const fractionDigits = tps >= 100 ? 0 : 1;
                     const formatted = tps.toLocaleString(undefined, {
                         minimumFractionDigits: fractionDigits,
                         maximumFractionDigits: fractionDigits
                     });
                     tpsCell.textContent = `${formatted} tx/s`;
+
+                    const txPerBlock = Math.floor(gasLimit / gasCost);
+                    const txPerBlockFormatted = txPerBlock.toLocaleString(undefined, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    });
+                    txPerBlockCell.textContent = `${txPerBlockFormatted} tx`;
                 });
             }
 
@@ -607,7 +622,7 @@
                         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     }),
                     datasets: [{
-                        label: 'Target',
+                        label: 'Gas Limit',
                         data: blobData.map(d => d.target),
                         borderColor: '#10b981',
                         backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -687,10 +702,10 @@
                                     ];
                                 },
                                 label: function(context) {
-                                    const blobs = context.parsed.y;
-                                    const kbps = ((blobs * BLOB_SIZE_BYTES) / 1024) / BLOCK_TIME_SECONDS;
-                                    const mbps = kbps / 1024;
-                                    return context.dataset.label + ': ' + blobs + ' blobs/block (' + kbps.toFixed(1) + ' KB/s, ' + mbps.toFixed(2) + ' MB/s)';
+                                    const gasLimit = context.parsed.y;
+                                    const gasPerSecond = gasLimit / BLOCK_TIME_SECONDS;
+                                    const gasPerSecondM = gasPerSecond / 1000000;
+                                    return context.dataset.label + ': ' + gasLimit.toLocaleString() + ' gas/block (' + gasPerSecondM.toFixed(2) + ' M gas/s)';
                                 }
                             }
                         }
@@ -706,12 +721,12 @@
                             },
                             ticks: {
                                 callback: function(value) {
-                                    return value.toLocaleString() + ' blobs';
+                                    return value.toLocaleString() + ' gas';
                                 }
                             },
                             title: {
                                 display: true,
-                                text: 'Blobs per Block'
+                                text: 'Gas Limit per Block'
                             }
                         },
                         y1: {
@@ -731,23 +746,24 @@
                                 return context.chart.scales.y.max;
                             },
                             afterBuildTicks: function(scale) {
-                                // Filter out ticks that would be below 20 KB/s
+                                // Filter out ticks that would be below 0.5 M gas/s
                                 scale.ticks = scale.ticks.filter(tick => {
-                                    const kbps = ((tick.value * BLOB_SIZE_BYTES) / 1024) / BLOCK_TIME_SECONDS;
-                                    return kbps >= 20;
+                                    const gasPerSecond = tick.value / BLOCK_TIME_SECONDS;
+                                    const gasPerSecondM = gasPerSecond / 1000000;
+                                    return gasPerSecondM >= 0.5;
                                 });
                             },
                             ticks: {
                                 callback: function(value) {
-                                    // Convert blobs/block to KB/s
-                                    // Each blob is 128 KB, block time is 12 seconds
-                                    const kbps = ((value * BLOB_SIZE_BYTES) / 1024) / BLOCK_TIME_SECONDS;
-                                    return kbps.toFixed(1) + ' KB/s';
+                                    // Convert gas/block to M gas/s
+                                    const gasPerSecond = value / BLOCK_TIME_SECONDS;
+                                    const gasPerSecondM = gasPerSecond / 1000000;
+                                    return gasPerSecondM.toFixed(2) + ' M gas/s';
                                 }
                             },
                             title: {
                                 display: true,
-                                text: 'Throughput (KB/s)'
+                                text: 'Throughput (M gas/s)'
                             }
                         },
                         x: {
