@@ -22,7 +22,7 @@ The entire application consists of two files:
    - Metrics calculation (current target, growth rates based on target values)
    - Responsive design for mobile/desktop
 
-2. **data.json**: Static JSON file with Ethereum hard fork blob parameters:
+2. **data_gaslimit.json**: Static JSON file with Ethereum L1 gas limit parameters:
    - Contains a `blobData` array with objects having `date`, `upgrade-name`, `target`, and `max` properties
    - `upgrade-name`: name of the Ethereum hard fork (e.g., "Dencun", "Pectra", "Fusaka")
    - `target`: target blobs per block for that hard fork
@@ -37,14 +37,14 @@ The entire application consists of two files:
   - Target values (dashed green line)
   - Max capacity (dashed red line)
   - Uses smooth curves (`tension: 0.4`), custom colors, and responsive sizing
-- **Data Processing**: JavaScript fetches `data.json` and calculates:
+- **Data Processing**: JavaScript fetches `data_gaslimit.json` and calculates:
   - Current target value (last data point's target)
   - Monthly target growth (percentage change between last two target points)
   - Total target growth (percentage change from first to last target point)
-- **No Backend**: All data is static; updates require modifying `data.json` and committing changes
+- **No Backend**: All data is static; updates require modifying `data_gaslimit.json` and committing changes
 
 ## Development Notes
 
-- The dashboard automatically adapts to the data in `data.json` - to update metrics, modify the JSON file
+- The dashboard automatically adapts to the data in `data_gaslimit.json` - to update metrics, modify the JSON file
 - Chart.js is loaded from CDN (version 4.2.1), no local dependencies
 - CSS uses modern features (CSS variables, gradients, flexbox) - test in modern browsers

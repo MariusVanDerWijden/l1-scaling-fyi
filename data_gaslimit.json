@@ -4,52 +4,60 @@
     {
       "date": "2021-08-01",
       "upgrade-name": "Gas Limit Update 1",
-      "target": 15000000,
-      "max": 30000000
+      "executionTime": 3,
+      "parallelism": 1,
+      "mgas": 10
     },
     {
       "date": "2025-01-01",
       "upgrade-name": "Gas Limit Update 2",
-      "target": 15000000,
-      "max": 30000000
+      "executionTime": 3,
+      "parallelism": 1,
+      "mgas": 10
     },
     {
       "date": "2025-02-01",
       "upgrade-name": "Gas Limit Update 3",
-      "target": 18000000,
-      "max": 36000000
+      "executionTime": 3,
+      "parallelism": 1,
+      "mgas": 12
     },
     {
       "date": "2025-07-20",
       "upgrade-name": "Gas Limit Update 4",
-      "target": 22500000,
-      "max": 45000000
+      "executionTime": 3,
+      "parallelism": 1,
+      "mgas": 15
     },
     {
       "date": "2025-11-01",
       "upgrade-name": "Gas Limit Update 5",
-      "target": 30000000,
-      "max": 60000000
+      "executionTime": 3,
+      "parallelism": 1,
+      "mgas": 20
     },
     {
-      "date": "2026-03-01",
+      "date": "2026-06-01",
       "upgrade-name": "Gas Limit Update 6",
-      "target": 40000000,
-      "max": 80000000,
-      "projected": true
-    },
-    {
-      "date": "2026-08-01",
-      "upgrade-name": "Gas Limit Update 7",
-      "target": 50000000,
-      "max": 100000000,
+      "executionTime": 3,
+      "parallelism": 1,
+      "mgas": 40,
       "projected": true
     },
     {
       "date": "2026-12-01",
+      "upgrade-name": "Gas Limit Update 7",
+      "executionTime": 3,
+      "parallelism": 3,
+      "mgas": 40,
+      "projected": true
+    },
+    {
+      "date": "2027-03-01",
       "upgrade-name": "Gas Limit Update 8",
-      "target": 75000000,
-      "max": 150000000,
+      "executionTime": 5,
+      "parallelism": 3,
+      "mgas": 60,
       "projected": true
     }
   ]
