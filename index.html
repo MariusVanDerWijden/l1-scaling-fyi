@@ -547,7 +547,7 @@
             <div class="simulator-mgas-prominent">
                 <div class="simulator-mgas-row">
                     <div><span id="blockGasValue" class="simulator-mgas-value">60M</span><span class="simulator-mgas-unit"> block gas</span></div>
-                    <div><span id="mgasDisplayValue" class="simulator-mgas-value">20</span><span class="simulator-mgas-unit">M gas/s</span></div>
+                    <div><span id="mgasDisplayValue" class="simulator-mgas-value">5</span><span class="simulator-mgas-unit"> M gas/s/slot</span></div>
                 </div>
                 <div class="simulator-block-gas" id="blockGasFormula">3 s × 1 × 20 M gas/s</div>
             </div>
@@ -569,7 +569,7 @@
                 <div class="control-group">
                     <label for="mgasSlider">M gas/s</label>
                     <div class="slider-row">
-                        <input type="range" id="mgasSlider" min="1" max="100" value="20" step="1" aria-label="Million gas per second">
+                        <input type="range" id="mgasSlider" min="1" max="100" value="20" step="0.01" aria-label="Million gas per second">
                         <span class="scenario-notes" id="mgasSliderValue">20 M gas/s</span>
                     </div>
                 </div>
@@ -922,14 +922,19 @@
                 return { executionTime, parallelism, mgas, blockGasM, gasLimit, gasPerSecond };
             }
 
+            function formatMgas(mgas) {
+                return mgas % 1 === 0 ? String(Math.round(mgas)) : Number(mgas).toFixed(2);
+            }
+
             function updateSimulatorDisplay() {
                 const { executionTime, parallelism, mgas, blockGasM, gasLimit } = getSimulatorParams();
-                if (mgasDisplayValue) mgasDisplayValue.textContent = String(mgas);
+                const mgasPerSlot = gasLimit / BLOCK_TIME_SECONDS / 1e6;
+                if (mgasDisplayValue) mgasDisplayValue.textContent = formatMgas(mgasPerSlot);
                 if (blockGasValue) blockGasValue.textContent = formatGasNumber(gasLimit);
-                if (blockGasFormula) blockGasFormula.textContent = `${executionTime} s × ${parallelism} × ${mgas} M gas/s`;
+                if (blockGasFormula) blockGasFormula.textContent = `${executionTime} s × ${parallelism} × ${formatMgas(mgas)} M gas/s`;
                 if (executionTimeValue) executionTimeValue.textContent = executionTime + ' s';
                 if (parallelismValue) parallelismValue.textContent = String(parallelism);
-                if (mgasSliderValue) mgasSliderValue.textContent = mgas + ' M gas/s';
+                if (mgasSliderValue) mgasSliderValue.textContent = formatMgas(mgas) + ' M gas/s';
             }
 
             function updateCalculations() {
@@ -953,13 +958,22 @@
                 });
             }
 
-            function setMgasFromMilestoneGas(milestoneGas) {
-                const executionTime = Number(executionTimeSlider.value) || 3;
-                const parallelism = Number(parallelismSlider.value) || 1;
-                const blockGasM = Number(milestoneGas) / 1e6;
-                const mgas = blockGasM / (executionTime * parallelism);
-                const clamped = Math.max(1, Math.min(100, Math.round(mgas)));
-                mgasSlider.value = String(clamped);
+            function setSlidersFromMilestone(milestone, useTarget) {
+                const exec = milestone.executionTime ?? 3;
+                const par = milestone.parallelism ?? 1;
+                let mgas = Number(milestone.mgas);
+                if (useTarget && milestone.target != null) {
+                    const blockGasM = Number(milestone.target) / 1e6;
+                    mgas = blockGasM / (exec * par);
+                } else if (!Number.isFinite(mgas) || mgas <= 0) {
+                    const maxGas = Number(milestone.max);
+                    if (maxGas > 0 && Number.isFinite(maxGas)) mgas = (maxGas / 1e6) / (exec * par);
+                    else return;
+                }
+                mgas = Math.max(1, Math.min(100, mgas));
+                executionTimeSlider.value = String(exec);
+                parallelismSlider.value = String(par);
+                mgasSlider.value = String(Math.round(mgas * 100) / 100);
                 updateSimulatorDisplay();
                 updateCalculations();
             }
@@ -967,8 +981,7 @@
             function updateSliderFromMilestone() {
                 const selectedMilestone = getSelectedMilestone(blobData, milestoneSelect.value);
                 if (!selectedMilestone) return;
-                const maxGas = Number(selectedMilestone.max);
-                if (maxGas > 0 && Number.isFinite(maxGas)) setMgasFromMilestoneGas(maxGas);
+                setSlidersFromMilestone(selectedMilestone, false);
             }
 
             function applyMilestoneContext() {
@@ -1013,9 +1026,8 @@
                 button.addEventListener('click', () => {
                     const selectedMilestone = getSelectedMilestone(blobData, milestoneSelect.value);
                     if (!selectedMilestone) return;
-                    const preset = button.dataset.preset;
-                    const gas = preset === 'target' ? selectedMilestone.target : selectedMilestone.max;
-                    if (gas != null && Number.isFinite(Number(gas))) setMgasFromMilestoneGas(Number(gas));
+                    const useTarget = button.dataset.preset === 'target';
+                    setSlidersFromMilestone(selectedMilestone, useTarget);
                 });
             });
 
