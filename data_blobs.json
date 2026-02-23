@@ -32,28 +32,28 @@
       "max": 21
     },
     {
-      "date": "2026-03-11",
+      "date": "2026-06-01",
       "upgrade-name": "BPO3",
       "target": 20,
       "max": 30,
       "projected": true
     },
     {
-      "date": "2026-04-08",
+      "date": "2026-10-01",
       "upgrade-name": "BPO4",
       "target": 29,
       "max": 43,
       "projected": true
     },
     {
-      "date": "2026-05-13",
+      "date": "2027-01-01",
       "upgrade-name": "BPO5",
       "target": 42,
       "max": 63,
       "projected": true
     },
     {
-      "date": "2026-06-10",
+      "date": "2027-04-01",
       "upgrade-name": "BPO6",
       "target": 48,
       "max": 72,
